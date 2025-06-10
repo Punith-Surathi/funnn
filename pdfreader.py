@@ -14,26 +14,34 @@ with pdfplumber.open(pdf_path) as pdf:
         for j, table in enumerate(tables):
             df = pd.DataFrame(table)
 
-            # Get table bounding box
+            # Bounding box for heading extraction
             table_bbox = page.find_tables()[j].bbox
 
-            # Extract heading above the table
+            # Get heading text above the table
             heading_lines = [
                 w['text'] for w in words
                 if w['bottom'] < table_bbox[1] and w['bottom'] > table_bbox[1] - 50
             ]
             heading_text = " ".join(heading_lines).strip() if heading_lines else "Heading Not Found"
 
-            # Add column headings
+            # First row = column headers
             col_headers = df.iloc[0].tolist()
-            for col in col_headers:
-                all_rows.append([heading_text, col, "Column"])
 
-            # Add row values
+            # Add column headers as Label
+            for col in col_headers[1:]:  # skip row label header
+                col_text = col if col else "N/A"
+                label = f"{col_text} - {col_text} - {col_text}"
+                all_rows.append([heading_text, label, "Column"])
+
+            # Add row entries
             for row in df.iloc[1:].values.tolist():
-                for val in row:
-                    all_rows.append([heading_text, val, "Row"])
+                row_label = row[0].strip() if row[0] else "N/A"
+                for idx, val in enumerate(row[1:], start=1):
+                    col_name = col_headers[idx] if idx < len(col_headers) else f"Col{idx}"
+                    value = val.strip() if val else "N/A"
+                    label = f"{row_label} - {col_name} - {value}"
+                    all_rows.append([heading_text, label, "Row"])
 
-# Write to single Excel sheet
-final_df = pd.DataFrame(all_rows, columns=["Heading", "Value", "Type"])
+# Save to Excel
+final_df = pd.DataFrame(all_rows, columns=["Heading", "Label", "Type"])
 final_df.to_excel(excel_path, index=False, sheet_name="AllData")
