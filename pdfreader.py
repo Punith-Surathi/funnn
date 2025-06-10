@@ -4,44 +4,42 @@ import pandas as pd
 pdf_path = r"D:\sample\sample-tables.pdf"
 excel_path = r"D:\sample\sample.xlsx"
 
-all_rows = []
+all_entries = []
 
 with pdfplumber.open(pdf_path) as pdf:
-    for i, page in enumerate(pdf.pages):
+    for page in pdf.pages:
         words = page.extract_words()
         tables = page.extract_tables()
 
-        for j, table in enumerate(tables):
+        for i, table in enumerate(tables):
             df = pd.DataFrame(table)
 
-            # Bounding box for heading extraction
-            table_bbox = page.find_tables()[j].bbox
+            if df.empty or df.shape[1] < 2:
+                continue
 
-            # Get heading text above the table
+            # Get table bounding box
+            table_bbox = page.find_tables()[i].bbox
+
+            # Get heading above the table
             heading_lines = [
                 w['text'] for w in words
                 if w['bottom'] < table_bbox[1] and w['bottom'] > table_bbox[1] - 50
             ]
-            heading_text = " ".join(heading_lines).strip() if heading_lines else "Heading Not Found"
+            heading = " ".join(heading_lines).strip() or "Heading Not Found"
 
-            # First row = column headers
-            col_headers = df.iloc[0].tolist()
+            # Extract column headers (skip the first column which is row labels)
+            col_headers = df.iloc[0, 1:]
+            for col in col_headers:
+                clean_col = str(col).strip()
+                if clean_col:  # Only add non-empty
+                    all_entries.append([heading, clean_col, "Column"])
 
-            # Add column headers as Label
-            for col in col_headers[1:]:  # skip row label header
-                col_text = col if col else "N/A"
-                label = f"{col_text} - {col_text} - {col_text}"
-                all_rows.append([heading_text, label, "Column"])
-
-            # Add row entries
+            # Extract row labels (skip header row, get first column only)
             for row in df.iloc[1:].values.tolist():
-                row_label = row[0].strip() if row[0] else "N/A"
-                for idx, val in enumerate(row[1:], start=1):
-                    col_name = col_headers[idx] if idx < len(col_headers) else f"Col{idx}"
-                    value = val.strip() if val else "N/A"
-                    label = f"{row_label} - {col_name} - {value}"
-                    all_rows.append([heading_text, label, "Row"])
+                row_label = str(row[0]).strip()
+                if row_label:  # Only add non-empty
+                    all_entries.append([heading, row_label, "Row"])
 
-# Save to Excel
-final_df = pd.DataFrame(all_rows, columns=["Heading", "Label", "Type"])
+# Convert and save to Excel
+final_df = pd.DataFrame(all_entries, columns=["Heading", "Label", "Type"])
 final_df.to_excel(excel_path, index=False, sheet_name="AllData")
