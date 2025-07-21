@@ -1,31 +1,43 @@
 {
   "type": "record",
-  "name": "UserActivity",
+  "name": "ScoringOutput",
   "namespace": "com.punith.kafka",
   "fields": [
-    { "name": "event_id", "type": "string" },
-    { "name": "user", "type": "string" },
-    { "name": "created_at", "type": "long" },
+    { "name": "id", "type": "string" },
+    { "name": "model_name", "type": "string" },
+    { "name": "model_version", "type": "string" },
+    { "name": "scored_at", "type": "long" },  // UNIX timestamp
     {
-      "name": "event_details",
+      "name": "result",
       "type": [
         {
           "type": "record",
-          "name": "ClickEvent",
+          "name": "ASubIDGroup",
           "fields": [
-            { "name": "event_type", "type": { "type": "enum", "name": "ClickTypeEnum", "symbols": ["click"] } },
-            { "name": "element_id", "type": "string" },
-            { "name": "page", "type": "string" }
+            { "name": "scoring_ticket_id", "type": { "type": "enum", "name": "ASubIDs", "symbols": ["a_sub_id2", "a_sub_id5", "a_sub_id10"] } },
+            { "name": "pred_class", "type": "string" },
+            { "name": "pred_0", "type": "double" },
+            { "name": "pred_1", "type": "double" }
           ]
         },
         {
           "type": "record",
-          "name": "PurchaseEvent",
+          "name": "ASubClsGroup",
           "fields": [
-            { "name": "event_type", "type": { "type": "enum", "name": "PurchaseTypeEnum", "symbols": ["purchase"] } },
-            { "name": "product_id", "type": "string" },
-            { "name": "price", "type": "double" },
-            { "name": "currency", "type": "string" }
+            { "name": "scoring_ticket_id", "type": { "type": "enum", "name": "ASubCls", "symbols": ["a_sub_cls"] } },
+            { "name": "pred_class", "type": "string" },
+            { "name": "pred_nodemand", "type": "double" },
+            { "name": "pred_send_demand", "type": "double" }
+          ]
+        },
+        {
+          "type": "record",
+          "name": "PSubIDGroup",
+          "fields": [
+            { "name": "scoring_ticket_id", "type": { "type": "enum", "name": "PSubID", "symbols": ["p_sub_id"] } },
+            { "name": "pred_0", "type": "double" },
+            { "name": "pred_sub0", "type": "double" },
+            { "name": "pred_sub1", "type": "double" }
           ]
         }
       ]
